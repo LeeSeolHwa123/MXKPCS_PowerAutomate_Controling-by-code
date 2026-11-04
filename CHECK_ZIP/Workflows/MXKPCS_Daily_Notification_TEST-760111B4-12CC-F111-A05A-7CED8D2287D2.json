@@ -1,0 +1,2162 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "mxkpcs_sharedsharepointonline_892d2"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      },
+      "shared_office365": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "mxkpcs_sharedoffice365_c3c07"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
+      },
+      "shared_sendmail": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "mxkpcs_sharedsendmail_26a4c"
+        },
+        "api": {
+          "name": "shared_sendmail"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "되풀이": {
+          "recurrence": {
+            "interval": 1,
+            "frequency": "Day",
+            "timeZone": "Korea Standard Time",
+            "schedule": {
+              "hours": [
+                9
+              ],
+              "minutes": [
+                0
+              ]
+            }
+          },
+          "type": "Recurrence"
+        }
+      },
+      "actions": {
+        "Compose_AsOfDate": {
+          "runAfter": {},
+          "type": "Compose",
+          "inputs": "@formatDateTime(\r\n  convertTimeZone(\r\n    utcNow(),\r\n    'UTC',\r\n    'Korea Standard Time'\r\n  ),\r\n  'yyyy-MM-dd'\r\n)"
+        },
+        "Get_XRF_Items": {
+          "runAfter": {
+            "Compose_AsOfDate": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "parameters": {
+              "dataset": "https://kochind.sharepoint.com/sites/MLX_MXKPCS",
+              "table": "651d2a7e-d6b9-43ce-9c44-2991682eb058",
+              "$top": 5000
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "operationId": "GetItems",
+              "connectionName": "shared_sharepointonline"
+            }
+          }
+        },
+        "Get_XRF_Measurements": {
+          "runAfter": {
+            "Get_XRF_Items": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "parameters": {
+              "dataset": "https://kochind.sharepoint.com/sites/MLX_MXKPCS",
+              "table": "dd0bf876-6066-4877-be6d-eb10eb5ce35c",
+              "$top": 5000
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "operationId": "GetItems",
+              "connectionName": "shared_sharepointonline"
+            }
+          }
+        },
+        "Get_XRF_ElementResults": {
+          "runAfter": {
+            "Get_XRF_Measurements": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "parameters": {
+              "dataset": "https://kochind.sharepoint.com/sites/MLX_MXKPCS",
+              "table": "b0a877ee-5334-4237-9b8f-e94235b118a4",
+              "$top": 5000
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "operationId": "GetItems",
+              "connectionName": "shared_sharepointonline"
+            }
+          }
+        },
+        "Get_XRF_PrecisionAnalyses": {
+          "runAfter": {
+            "Get_XRF_ElementResults": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "parameters": {
+              "dataset": "https://kochind.sharepoint.com/sites/MLX_MXKPCS",
+              "table": "3c387146-a8c5-4b94-9bf3-251452b19a1c",
+              "$top": 5000
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "operationId": "GetItems",
+              "connectionName": "shared_sharepointonline"
+            }
+          }
+        },
+        "Get_XRF_PrecisionElementResults": {
+          "runAfter": {
+            "Get_XRF_PrecisionAnalyses": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "parameters": {
+              "dataset": "https://kochind.sharepoint.com/sites/MLX_MXKPCS",
+              "table": "3fc979f1-4d6c-4d8a-9c75-3cab099d9971",
+              "$top": 5000
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "operationId": "GetItems",
+              "connectionName": "shared_sharepointonline"
+            }
+          }
+        },
+        "Select_Items": {
+          "runAfter": {
+            "Get_XRF_PrecisionElementResults": [
+              "Succeeded"
+            ]
+          },
+          "type": "Select",
+          "inputs": {
+            "from": "@outputs('Get_XRF_Items')?['body/value']",
+            "select": {
+              "itemId": "@item()?['Title']",
+              "partNumber": "@item()?['field_1']",
+              "itemName": "@item()?['field_2']",
+              "type": "@if(\r\n  empty(item()?['field_4']?['Value']),\r\n  'Auxiliary Materials',\r\n  item()?['field_4']?['Value']\r\n)",
+              "crType": "@item()?['field_8']?['Value']",
+              "lifecycle": "@if(\r\n  empty(item()?['field_9']?['Value']),\r\n  'ExistingActive',\r\n  item()?['field_9']?['Value']\r\n)",
+              "isCurrent": "@if(\r\n  equals(item()?['field_10'], false),\r\n  false,\r\n  true\r\n)",
+              "department": "@if(\r\n  empty(item()?['field_5']?['Value']),\r\n  '',\r\n  item()?['field_5']?['Value']\r\n)",
+              "createdDate": "@if(empty(item()?['Created']),'',formatDateTime(item()?['Created'],'yyyy-MM-dd'))"
+            }
+          }
+        },
+        "Select_Measurements": {
+          "runAfter": {
+            "Select_Items": [
+              "Succeeded"
+            ]
+          },
+          "type": "Select",
+          "inputs": {
+            "from": "@outputs('Get_XRF_Measurements')?['body/value']",
+            "select": {
+              "measurementId": "@item()?['Title']",
+              "itemId": "@item()?['field_1']",
+              "date": "@item()?['Measured_Date']",
+              "attemptNo": "@item()?['field_4']",
+              "parentMeasurementId": "@item()?['field_5']",
+              "role": "@item()?['field_3']?['Value']",
+              "sortKey": "@concat(\r\n  formatDateTime(\r\n    item()?['Measured_Date'],\r\n    'yyyy-MM-dd'\r\n  ),\r\n  '|',\r\n  string(item()?['Title'])\r\n)"
+            }
+          }
+        },
+        "Select_ElementResults": {
+          "runAfter": {
+            "Select_Measurements": [
+              "Succeeded"
+            ]
+          },
+          "type": "Select",
+          "inputs": {
+            "from": "@outputs('Get_XRF_ElementResults')?['body/value']",
+            "select": {
+              "measurementId": "@item()?['Title']",
+              "element": "@item()?['field_1']?['Value']",
+              "ppm": "@item()?['field_2']",
+              "sigma": "@item()?['field_3']",
+              "judgment": "@item()?['field_4']"
+            }
+          }
+        },
+        "Select_Precision": {
+          "runAfter": {
+            "Select_ElementResults": [
+              "Succeeded"
+            ]
+          },
+          "type": "Select",
+          "inputs": {
+            "from": "@outputs('Get_XRF_PrecisionAnalyses')?['body/value']",
+            "select": {
+              "precisionId": "@item()?['Title']",
+              "triggerMeasurementId": "@item()?['field_1']",
+              "requestedAt": "@item()?['Requested_At']",
+              "requestedBy": "@item()?['Requested_By']",
+              "labName": "@item()?['field_2']",
+              "reportNo": "@item()?['field_3']",
+              "resultFile": "@item()?['field_5']",
+              "finalConfirm": "@item()?['field_6']"
+            }
+          }
+        },
+        "Select_PrecisionResults": {
+          "runAfter": {
+            "Select_Precision": [
+              "Succeeded"
+            ]
+          },
+          "type": "Select",
+          "inputs": {
+            "from": "@outputs('Get_XRF_PrecisionElementResults')?['body/value']",
+            "select": {
+              "precisionId": "@item()?['Title']",
+              "element": "@item()?['field_1']",
+              "presence": "@item()?['field_2']",
+              "ppm": "@item()?['field_3']"
+            }
+          }
+        },
+        "Initialize_PeriodicMail": {
+          "runAfter": {
+            "Select_PrecisionResults": [
+              "Succeeded"
+            ]
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "arrPeriodicMail",
+                "type": "array",
+                "value": []
+              }
+            ]
+          }
+        },
+        "Initialize_PrecisionMail": {
+          "runAfter": {
+            "Initialize_PeriodicMail": [
+              "Succeeded"
+            ]
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "arrPrecisionMail",
+                "type": "array",
+                "value": []
+              }
+            ]
+          }
+        },
+        "Apply_to_each_Item": {
+          "foreach": "@body('Select_Items')",
+          "actions": {
+            "Filter_Item_Measurements": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Select_Measurements')",
+                "where": "@equals(item()?['itemId'],items('Apply_to_each_Item')?['itemId'])"
+              }
+            },
+            "Filter_Initial_Measurement": {
+              "runAfter": {
+                "Filter_Item_Measurements": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Filter_Item_Measurements')",
+                "where": "@equals(item()?['role'],'Initial')"
+              }
+            },
+            "Compose_Initial": {
+              "runAfter": {
+                "Filter_Initial_Measurement": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(\r\n  empty(body('Filter_Initial_Measurement')),\r\n  null,\r\n  first(body('Filter_Initial_Measurement'))\r\n)"
+            },
+            "Filter_Initial_Elements": {
+              "runAfter": {
+                "Condition_AppendInitialPeriodMap": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Select_ElementResults')",
+                "where": "@equals(item()?['measurementId'],outputs('Compose_Initial')?['measurementId'])"
+              }
+            },
+            "Select_InitialElementBase": {
+              "runAfter": {
+                "Filter_Initial_Elements": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Filter_Initial_Elements')",
+                "select": {
+                  "element": "@item()?['element']",
+                  "ppmText": "@toUpper(\r\n  trim(\r\n    string(\r\n      coalesce(item()?['ppm'], '')\r\n    )\r\n  )\r\n)",
+                  "ppmNorm": "@replace(\r\n  replace(\r\n    replace(\r\n      toUpper(\r\n        trim(\r\n          string(\r\n            coalesce(item()?['ppm'], '')\r\n          )\r\n        )\r\n      ),\r\n      '–',\r\n      '-'\r\n    ),\r\n    '—',\r\n    '-'\r\n  ),\r\n  '−',\r\n  '-'\r\n)",
+                  "judgmentText": "@toUpper(\r\n  trim(\r\n    string(\r\n      coalesce(item()?['judgment'], '')\r\n    )\r\n  )\r\n)",
+                  "internalLimit": "@if(\r\n  equals(item()?['element'], 'Cd'),\r\n  70,\r\n  if(\r\n    or(\r\n      equals(item()?['element'], 'Cl'),\r\n      equals(item()?['element'], 'Br')\r\n    ),\r\n    630,\r\n    700\r\n  )\r\n)"
+                }
+              }
+            },
+            "Select_InitialElementFlags": {
+              "runAfter": {
+                "Select_InitialElementBase": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Select_InitialElementBase')",
+                "select": {
+                  "element": "@item()?['element']",
+                  "ppmText": "@item()?['ppmText']",
+                  "ppmNorm": "@item()?['ppmNorm']",
+                  "judgmentText": "@item()?['judgmentText']",
+                  "internalLimit": "@item()?['internalLimit']",
+                  "isRemeasure": "@or(\r\n  equals(item()?['judgmentText'], '??'),\r\n  equals(item()?['judgmentText'], '※'),\r\n  equals(item()?['judgmentText'], 'CANNOT JUDGE'),\r\n  equals(item()?['judgmentText'], 'CANNOT BE JUDGED')\r\n)",
+                  "isND": "@or(\r\n  equals(item()?['ppmNorm'], 'ND'),\r\n  equals(item()?['ppmNorm'], 'N.D.'),\r\n  equals(item()?['ppmNorm'], 'N.D'),\r\n  equals(item()?['ppmNorm'], 'NOT DETECTED'),\r\n  equals(item()?['ppmNorm'], 'NON DETECTED'),\r\n  equals(item()?['ppmNorm'], '불검출'),\r\n  and(\r\n    greaterOrEquals(\r\n      length(item()?['ppmNorm']),\r\n      2\r\n    ),\r\n    equals(\r\n      replace(item()?['ppmNorm'], '-', ''),\r\n      ''\r\n    )\r\n  )\r\n)",
+                  "isMissing": "@or(\r\n  empty(item()?['ppmNorm']),\r\n  equals(item()?['ppmNorm'], '-'),\r\n  equals(item()?['ppmNorm'], 'N/A'),\r\n  equals(item()?['ppmNorm'], 'NA'),\r\n  equals(item()?['ppmNorm'], 'NULL'),\r\n  equals(item()?['ppmNorm'], 'NONE')\r\n)",
+                  "isNumeric": "@isFloat(\r\n  replace(\r\n    item()?['ppmNorm'],\r\n    ',',\r\n    ''\r\n  )\r\n)",
+                  "numericPpm": "@if(\r\n  isFloat(\r\n    replace(\r\n      item()?['ppmNorm'],\r\n      ',',\r\n      ''\r\n    )\r\n  ),\r\n  float(\r\n    replace(\r\n      item()?['ppmNorm'],\r\n      ',',\r\n      ''\r\n    )\r\n  ),\r\n  0\r\n)"
+                }
+              }
+            },
+            "Select_InitialElementLevels": {
+              "runAfter": {
+                "Select_InitialElementFlags": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Select_InitialElementFlags')",
+                "select": {
+                  "element": "@item()?['element']",
+                  "ppmNorm": "@item()?['ppmNorm']",
+                  "judgmentText": "@item()?['judgmentText']",
+                  "internalLimit": "@item()?['internalLimit']",
+                  "isND": "@item()?['isND']",
+                  "numericPpm": "@item()?['numericPpm']",
+                  "level": "@if(\r\n  item()?['isRemeasure'],\r\n  '',\r\n  if(\r\n    item()?['isND'],\r\n    'L',\r\n    if(\r\n      or(\r\n        item()?['isMissing'],\r\n        not(item()?['isNumeric'])\r\n      ),\r\n      '',\r\n      if(\r\n        and(\r\n          equals(item()?['numericPpm'], 0),\r\n          or(\r\n            equals(item()?['judgmentText'], 'ND'),\r\n            equals(item()?['judgmentText'], 'N.D.'),\r\n            equals(item()?['judgmentText'], 'N.D'),\r\n            equals(item()?['judgmentText'], 'NOT DETECTED'),\r\n            equals(item()?['judgmentText'], 'NON DETECTED'),\r\n            equals(item()?['judgmentText'], '불검출')\r\n          )\r\n        ),\r\n        'L',\r\n        if(\r\n          greater(\r\n            item()?['numericPpm'],\r\n            item()?['internalLimit']\r\n          ),\r\n          'H',\r\n          'M'\r\n        )\r\n      )\r\n    )\r\n  )\r\n)"
+                }
+              }
+            },
+            "Filter_Initial_Cl": {
+              "runAfter": {
+                "Select_InitialElementLevels": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Select_InitialElementLevels')",
+                "where": "@equals(item()?['element'],'Cl')"
+              }
+            },
+            "Filter_Initial_Br": {
+              "runAfter": {
+                "Filter_Initial_Cl": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Select_InitialElementLevels')",
+                "where": "@equals(item()?['element'],'Br')"
+              }
+            },
+            "Compose_Initial_Cl": {
+              "runAfter": {
+                "Filter_Initial_Br": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(\r\n  empty(body('Filter_Initial_Cl')),\r\n  null,\r\n  first(body('Filter_Initial_Cl'))\r\n)"
+            },
+            "Compose_Initial_Br": {
+              "runAfter": {
+                "Compose_Initial_Cl": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(\r\n  empty(body('Filter_Initial_Br')),\r\n  null,\r\n  first(body('Filter_Initial_Br'))\r\n)"
+            },
+            "Compose_Initial_ClBr_Level": {
+              "runAfter": {
+                "Compose_Initial_Br": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(\r\n  or(\r\n    empty(outputs('Compose_Initial_Cl')),\r\n    empty(outputs('Compose_Initial_Br')),\r\n    empty(outputs('Compose_Initial_Cl')?['level']),\r\n    empty(outputs('Compose_Initial_Br')?['level'])\r\n  ),\r\n  '',\r\n  if(\r\n    and(\r\n      equals(outputs('Compose_Initial_Cl')?['isND'], true),\r\n      equals(outputs('Compose_Initial_Br')?['isND'], true)\r\n    ),\r\n    'L',\r\n    if(\r\n      greater(\r\n        add(\r\n          outputs('Compose_Initial_Cl')?['numericPpm'],\r\n          outputs('Compose_Initial_Br')?['numericPpm']\r\n        ),\r\n        1050\r\n      ),\r\n      'H',\r\n      'M'\r\n    )\r\n  )\r\n)"
+            },
+            "Filter_Initial_InvalidLevel": {
+              "runAfter": {
+                "Compose_Initial_ClBr_Level": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Select_InitialElementLevels')",
+                "where": "@equals(empty(item()?['level']),true)"
+              }
+            },
+            "Filter_Initial_H": {
+              "runAfter": {
+                "Filter_Initial_InvalidLevel": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Select_InitialElementLevels')",
+                "where": "@equals(item()?['level'],'H')"
+              }
+            },
+            "Filter_Initial_M": {
+              "runAfter": {
+                "Filter_Initial_H": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Select_InitialElementLevels')",
+                "where": "@equals(item()?['level'],'M')"
+              }
+            },
+            "Compose_Initial_XRF_Level": {
+              "runAfter": {
+                "Filter_Initial_M": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(\r\n  or(\r\n    not(\r\n      equals(\r\n        length(body('Filter_Initial_Elements')),\r\n        6\r\n      )\r\n    ),\r\n    greater(\r\n      length(body('Filter_Initial_InvalidLevel')),\r\n      0\r\n    ),\r\n    empty(outputs('Compose_Initial_ClBr_Level'))\r\n  ),\r\n  '',\r\n  if(\r\n    or(\r\n      greater(\r\n        length(body('Filter_Initial_H')),\r\n        0\r\n      ),\r\n      equals(\r\n        outputs('Compose_Initial_ClBr_Level'),\r\n        'H'\r\n      )\r\n    ),\r\n    'H',\r\n    if(\r\n      or(\r\n        greater(\r\n          length(body('Filter_Initial_M')),\r\n          0\r\n        ),\r\n        equals(\r\n          outputs('Compose_Initial_ClBr_Level'),\r\n          'M'\r\n        )\r\n      ),\r\n      'M',\r\n      'L'\r\n    )\r\n  )\r\n)"
+            },
+            "Compose_CR_Level": {
+              "runAfter": {
+                "Compose_Initial_XRF_Level": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(\r\n  equals(\r\n    items('Apply_to_each_Item')?['crType'],\r\n    '직접접촉+잔류'\r\n  ),\r\n  'H',\r\n  if(\r\n    equals(\r\n      items('Apply_to_each_Item')?['crType'],\r\n      '직접접촉+비잔류'\r\n    ),\r\n    'M',\r\n    'L'\r\n  )\r\n)"
+            },
+            "Compose_Final_Risk": {
+              "runAfter": {
+                "Compose_CR_Level": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(\r\n  empty(outputs('Compose_Initial_XRF_Level')),\r\n  '',\r\n  if(\r\n    equals(\r\n      outputs('Compose_Initial_XRF_Level'),\r\n      'H'\r\n    ),\r\n    'Not Allowed',\r\n    if(\r\n      equals(\r\n        outputs('Compose_Initial_XRF_Level'),\r\n        'M'\r\n      ),\r\n      if(\r\n        equals(\r\n          outputs('Compose_CR_Level'),\r\n          'H'\r\n        ),\r\n        'H',\r\n        'M'\r\n      ),\r\n      if(\r\n        equals(\r\n          outputs('Compose_Initial_XRF_Level'),\r\n          'L'\r\n        ),\r\n        if(\r\n          equals(\r\n            outputs('Compose_CR_Level'),\r\n            'L'\r\n          ),\r\n          'L',\r\n          'M'\r\n        ),\r\n        ''\r\n      )\r\n    )\r\n  )\r\n)"
+            },
+            "Compose_Cycle": {
+              "runAfter": {
+                "Compose_Final_Risk": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(\r\n  equals(\r\n    outputs('Compose_Final_Risk'),\r\n    'H'\r\n  ),\r\n  'Monthly',\r\n  if(\r\n    equals(\r\n      outputs('Compose_Final_Risk'),\r\n      'M'\r\n    ),\r\n    'Semiannual',\r\n    if(\r\n      equals(\r\n        outputs('Compose_Final_Risk'),\r\n        'L'\r\n      ),\r\n      'Annual',\r\n      'Not Available'\r\n    )\r\n  )\r\n)"
+            },
+            "Compose_CycleMonths": {
+              "runAfter": {
+                "Compose_Cycle": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(\r\n  equals(\r\n    outputs('Compose_Cycle'),\r\n    'Monthly'\r\n  ),\r\n  1,\r\n  if(\r\n    equals(\r\n      outputs('Compose_Cycle'),\r\n      'Semiannual'\r\n    ),\r\n    6,\r\n    if(\r\n      equals(\r\n        outputs('Compose_Cycle'),\r\n        'Annual'\r\n      ),\r\n      12,\r\n      0\r\n    )\r\n  )\r\n)"
+            },
+            "Compose_WindowDays": {
+              "runAfter": {
+                "Compose_CycleMonths": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(\r\n  equals(\r\n    outputs('Compose_Cycle'),\r\n    'Monthly'\r\n  ),\r\n  15,\r\n  if(\r\n    or(\r\n      equals(\r\n        outputs('Compose_Cycle'),\r\n        'Semiannual'\r\n      ),\r\n      equals(\r\n        outputs('Compose_Cycle'),\r\n        'Annual'\r\n      )\r\n    ),\r\n    30,\r\n    0\r\n  )\r\n)"
+            },
+            "Compose_CycleLabel": {
+              "runAfter": {
+                "Compose_WindowDays": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(\r\n  equals(\r\n    outputs('Compose_Cycle'),\r\n    'Monthly'\r\n  ),\r\n  '월 1회',\r\n  if(\r\n    equals(\r\n      outputs('Compose_Cycle'),\r\n      'Semiannual'\r\n    ),\r\n    '반기 1회',\r\n    if(\r\n      equals(\r\n        outputs('Compose_Cycle'),\r\n        'Annual'\r\n      ),\r\n      '연 1회',\r\n      '-'\r\n    )\r\n  )\r\n)"
+            },
+            "Compose_BaseDate": {
+              "runAfter": {
+                "Compose_CycleLabel": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(\r\n  empty(\r\n    outputs('Compose_Initial')?['date']\r\n  ),\r\n  '',\r\n  formatDateTime(\r\n    outputs('Compose_Initial')?['date'],\r\n    'yyyy-MM-dd'\r\n  )\r\n)"
+            },
+            "Compose_FirstDueDate": {
+              "runAfter": {
+                "Compose_BaseDate": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(\r\n  or(\r\n    empty(outputs('Compose_BaseDate')),\r\n    equals(\r\n      outputs('Compose_CycleMonths'),\r\n      0\r\n    )\r\n  ),\r\n  '',\r\n  addToTime(\r\n    outputs('Compose_BaseDate'),\r\n    outputs('Compose_CycleMonths'),\r\n    'Month',\r\n    'yyyy-MM-dd'\r\n  )\r\n)"
+            },
+            "Filter_Cycle_Measurements": {
+              "runAfter": {
+                "Compose_FirstDueDate": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Filter_Item_Measurements')",
+                "where": "@equals(and(\r\n  not(\r\n    equals(\r\n      item()?['role'],\r\n      'Retest'\r\n    )\r\n  ),\r\n  not(\r\n    empty(\r\n      item()?['date']\r\n    )\r\n  ),\r\n  greater(\r\n    ticks(item()?['date']),\r\n    ticks(outputs('Compose_BaseDate'))\r\n  )\r\n),true)"
+              }
+            },
+            "Select_Cycle_Measurements": {
+              "runAfter": {
+                "Filter_Cycle_Measurements": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Filter_Cycle_Measurements')",
+                "select": {
+                  "measurementId": "@item()?['measurementId']",
+                  "date": "@formatDateTime(\r\n  item()?['date'],\r\n  'yyyy-MM-dd'\r\n)",
+                  "role": "@item()?['role']",
+                  "attemptNo": "@item()?['attemptNo']",
+                  "sortKey": "@concat(\r\n  formatDateTime(\r\n    item()?['date'],\r\n    'yyyy-MM-dd'\r\n  ),\r\n  '|',\r\n  string(\r\n    item()?['measurementId']\r\n  )\r\n)"
+                }
+              }
+            },
+            "Compose_Sorted_Cycle_Measurements": {
+              "runAfter": {
+                "Select_Cycle_Measurements": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@sort(\r\n  body('Select_Cycle_Measurements'),\r\n  'sortKey'\r\n)"
+            },
+            "Compose_CycleMeasurementCount": {
+              "runAfter": {
+                "Compose_Sorted_Cycle_Measurements": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@length(\r\n  outputs('Compose_Sorted_Cycle_Measurements')\r\n)"
+            },
+            "Reset_PeriodNo": {
+              "runAfter": {
+                "Compose_CycleMeasurementCount": [
+                  "Succeeded"
+                ]
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "vPeriodNo",
+                "value": 1
+              }
+            },
+            "Reset_ConsumedMeasurementIds": {
+              "runAfter": {
+                "Reset_PeriodNo": [
+                  "Succeeded"
+                ]
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "vConsumedMeasurementIds",
+                "value": "@json('[]')"
+              }
+            },
+            "Reset_LatestOverdueDue": {
+              "runAfter": {
+                "Reset_ConsumedMeasurementIds": [
+                  "Succeeded"
+                ]
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "vLatestOverdueDue",
+                "value": "@concat('','')"
+              }
+            },
+            "Reset_NextOpenDue": {
+              "runAfter": {
+                "Reset_LatestOverdueDue": [
+                  "Succeeded"
+                ]
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "vNextOpenDue",
+                "value": "@concat('','')"
+              }
+            },
+            "Reset_NextOpenWindowStart": {
+              "runAfter": {
+                "Reset_NextOpenDue": [
+                  "Succeeded"
+                ]
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "vNextOpenWindowStart",
+                "value": "@concat('','')"
+              }
+            },
+            "Reset_HasCompletedPeriodic": {
+              "runAfter": {
+                "Reset_NextOpenWindowStart": [
+                  "Succeeded"
+                ]
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "vHasCompletedPeriodic",
+                "value": false
+              }
+            },
+            "Reset_PeriodLoopDone": {
+              "runAfter": {
+                "Reset_HasCompletedPeriodic": [
+                  "Succeeded"
+                ]
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "vPeriodLoopDone",
+                "value": false
+              }
+            },
+            "Reset_PeriodicStatus": {
+              "runAfter": {
+                "Reset_PeriodLoopDone": [
+                  "Succeeded"
+                ]
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "vPeriodicStatus",
+                "value": "@concat('','')"
+              }
+            },
+            "Reset_PeriodicDueDate": {
+              "runAfter": {
+                "Reset_PeriodicStatus": [
+                  "Succeeded"
+                ]
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "vPeriodicDueDate",
+                "value": "@concat('','')"
+              }
+            },
+            "Condition_ActiveCycle": {
+              "actions": {
+                "DoUntil_FindCurrentPeriod": {
+                  "actions": {
+                    "Compose_PeriodPrevDue": {
+                      "type": "Compose",
+                      "inputs": "@if(\r\n  equals(\r\n    variables('vPeriodNo'),\r\n    1\r\n  ),\r\n  outputs('Compose_BaseDate'),\r\n  addToTime(\r\n    outputs('Compose_BaseDate'),\r\n    mul(\r\n      sub(\r\n        variables('vPeriodNo'),\r\n        1\r\n      ),\r\n      outputs('Compose_CycleMonths')\r\n    ),\r\n    'Month',\r\n    'yyyy-MM-dd'\r\n  )\r\n)"
+                    },
+                    "Compose_PeriodDue": {
+                      "runAfter": {
+                        "Compose_PeriodPrevDue": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Compose",
+                      "inputs": "@addToTime(\r\n  outputs('Compose_BaseDate'),\r\n  mul(\r\n    variables('vPeriodNo'),\r\n    outputs('Compose_CycleMonths')\r\n  ),\r\n  'Month',\r\n  'yyyy-MM-dd'\r\n)"
+                    },
+                    "Compose_PeriodNextDue": {
+                      "runAfter": {
+                        "Compose_PeriodDue": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Compose",
+                      "inputs": "@addToTime(\r\n  outputs('Compose_BaseDate'),\r\n  mul(\r\n    add(\r\n      variables('vPeriodNo'),\r\n      1\r\n    ),\r\n    outputs('Compose_CycleMonths')\r\n  ),\r\n  'Month',\r\n  'yyyy-MM-dd'\r\n)"
+                    },
+                    "Compose_PeriodWindowStart": {
+                      "runAfter": {
+                        "Compose_PeriodNextDue": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Compose",
+                      "inputs": "@addDays(\r\n  outputs('Compose_PeriodDue'),\r\n  sub(\r\n    0,\r\n    outputs('Compose_WindowDays')\r\n  ),\r\n  'yyyy-MM-dd'\r\n)"
+                    },
+                    "Filter_CurrentPeriodCandidates": {
+                      "runAfter": {
+                        "Compose_PeriodWindowStart": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@outputs('Compose_Sorted_Cycle_Measurements')",
+                        "where": "@equals(and(\r\n  not(\r\n    contains(\r\n      variables('vConsumedMeasurementIds'),\r\n      item()?['measurementId']\r\n    )\r\n  ),\r\n  if(\r\n    equals(\r\n      outputs('Compose_Cycle'),\r\n      'Annual'\r\n    ),\r\n    equals(\r\n      formatDateTime(\r\n        item()?['date'],\r\n        'yyyy'\r\n      ),\r\n      formatDateTime(\r\n        outputs('Compose_PeriodDue'),\r\n        'yyyy'\r\n      )\r\n    ),\r\n    and(\r\n      greater(\r\n        ticks(\r\n          concat(\r\n            item()?['date'],\r\n            'T00:00:00Z'\r\n          )\r\n        ),\r\n        ticks(\r\n          concat(\r\n            outputs('Compose_PeriodPrevDue'),\r\n            'T00:00:00Z'\r\n          )\r\n        )\r\n      ),\r\n      less(\r\n        ticks(\r\n          concat(\r\n            item()?['date'],\r\n            'T00:00:00Z'\r\n          )\r\n        ),\r\n        ticks(\r\n          concat(\r\n            outputs('Compose_PeriodNextDue'),\r\n            'T00:00:00Z'\r\n          )\r\n        )\r\n      )\r\n    )\r\n  )\r\n),true)"
+                      }
+                    },
+                    "Compose_CurrentPeriodCandidate": {
+                      "runAfter": {
+                        "Filter_CurrentPeriodCandidates": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Compose",
+                      "inputs": "@if(\r\n  empty(\r\n    body('Filter_CurrentPeriodCandidates')\r\n  ),\r\n  null,\r\n  first(\r\n    body('Filter_CurrentPeriodCandidates')\r\n  )\r\n)"
+                    },
+                    "Condition_PeriodHasMeasurement": {
+                      "actions": {
+                        "Append_ConsumedMeasurementId": {
+                          "type": "AppendToArrayVariable",
+                          "inputs": {
+                            "name": "vConsumedMeasurementIds",
+                            "value": "@outputs('Compose_CurrentPeriodCandidate')?['measurementId']"
+                          }
+                        },
+                        "Set_HasCompletedPeriodic_True": {
+                          "runAfter": {
+                            "Append_ConsumedMeasurementId": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "SetVariable",
+                          "inputs": {
+                            "name": "vHasCompletedPeriodic",
+                            "value": true
+                          }
+                        },
+                        "Increment_PeriodNo_AfterMeasurement": {
+                          "runAfter": {
+                            "Condition_PeriodIsAnnual": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "IncrementVariable",
+                          "inputs": {
+                            "name": "vPeriodNo",
+                            "value": 1
+                          }
+                        },
+                        "Condition_PeriodIsAnnual": {
+                          "actions": {
+                            "Apply_to_each_AnnualPeriodMeasurement": {
+                              "foreach": "@body('Filter_CurrentPeriodCandidates')",
+                              "actions": {
+                                "Append_PeriodMap_Annual": {
+                                  "type": "AppendToArrayVariable",
+                                  "inputs": {
+                                    "name": "arrMeasurementPeriodMap",
+                                    "value": "@addProperty(\r\n  addProperty(\r\n    addProperty(\r\n      json('{}'),\r\n      'measurementId',\r\n      string(\r\n        items('Apply_to_each_AnnualPeriodMeasurement')?['measurementId']\r\n      )\r\n    ),\r\n    'itemId',\r\n    string(\r\n      items('Apply_to_each_Item')?['itemId']\r\n    )\r\n  ),\r\n  'period',\r\n  concat(\r\n    'P',\r\n    string(variables('vPeriodNo'))\r\n  )\r\n)"
+                                  }
+                                }
+                              },
+                              "type": "Foreach"
+                            }
+                          },
+                          "runAfter": {
+                            "Set_HasCompletedPeriodic_True": [
+                              "Succeeded"
+                            ]
+                          },
+                          "else": {
+                            "actions": {
+                              "Append_PeriodMap_NonAnnual": {
+                                "type": "AppendToArrayVariable",
+                                "inputs": {
+                                  "name": "arrMeasurementPeriodMap",
+                                  "value": "@addProperty(\r\n  addProperty(\r\n    addProperty(\r\n      json('{}'),\r\n      'measurementId',\r\n      string(\r\n        outputs('Compose_CurrentPeriodCandidate')?['measurementId']\r\n      )\r\n    ),\r\n    'itemId',\r\n    string(\r\n      items('Apply_to_each_Item')?['itemId']\r\n    )\r\n  ),\r\n  'period',\r\n  concat(\r\n    'P',\r\n    string(variables('vPeriodNo'))\r\n  )\r\n)"
+                                }
+                              }
+                            }
+                          },
+                          "expression": {
+                            "and": [
+                              {
+                                "equals": [
+                                  "@equals(\r\n  outputs('Compose_Cycle'),\r\n  'Annual'\r\n)",
+                                  "@true"
+                                ]
+                              }
+                            ]
+                          },
+                          "type": "If"
+                        }
+                      },
+                      "runAfter": {
+                        "Compose_CurrentPeriodCandidate": [
+                          "Succeeded"
+                        ]
+                      },
+                      "else": {
+                        "actions": {
+                          "Condition_PeriodIsOverdue": {
+                            "actions": {
+                              "Set_LatestOverdueDue": {
+                                "type": "SetVariable",
+                                "inputs": {
+                                  "name": "vLatestOverdueDue",
+                                  "value": "@outputs('Compose_PeriodDue')"
+                                }
+                              },
+                              "Increment_PeriodNo_AfterOverdue": {
+                                "runAfter": {
+                                  "Set_LatestOverdueDue": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "type": "IncrementVariable",
+                                "inputs": {
+                                  "name": "vPeriodNo",
+                                  "value": 1
+                                }
+                              }
+                            },
+                            "else": {
+                              "actions": {
+                                "Set_NextOpenDue": {
+                                  "type": "SetVariable",
+                                  "inputs": {
+                                    "name": "vNextOpenDue",
+                                    "value": "@outputs('Compose_PeriodDue')"
+                                  }
+                                },
+                                "Set_NextOpenWindowStart": {
+                                  "runAfter": {
+                                    "Set_NextOpenDue": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "type": "SetVariable",
+                                  "inputs": {
+                                    "name": "vNextOpenWindowStart",
+                                    "value": "@outputs('Compose_PeriodWindowStart')"
+                                  }
+                                },
+                                "Set_PeriodLoopDone_True": {
+                                  "runAfter": {
+                                    "Set_NextOpenWindowStart": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "type": "SetVariable",
+                                  "inputs": {
+                                    "name": "vPeriodLoopDone",
+                                    "value": true
+                                  }
+                                }
+                              }
+                            },
+                            "expression": {
+                              "and": [
+                                {
+                                  "equals": [
+                                    "@greater(\r\n  ticks(\r\n    concat(\r\n      outputs('Compose_AsOfDate'),\r\n      'T00:00:00Z'\r\n    )\r\n  ),\r\n  ticks(\r\n    concat(\r\n      outputs('Compose_PeriodDue'),\r\n      'T00:00:00Z'\r\n    )\r\n  )\r\n)",
+                                    "@true"
+                                  ]
+                                }
+                              ]
+                            },
+                            "type": "If"
+                          }
+                        }
+                      },
+                      "expression": {
+                        "and": [
+                          {
+                            "equals": [
+                              "@empty(\r\n  outputs('Compose_CurrentPeriodCandidate')\r\n)",
+                              "@false"
+                            ]
+                          }
+                        ]
+                      },
+                      "type": "If"
+                    }
+                  },
+                  "expression": "@equals(variables('vPeriodLoopDone'),true)",
+                  "limit": {
+                    "count": 100,
+                    "timeout": "PT5M"
+                  },
+                  "type": "Until"
+                },
+                "Condition_InRecommendationWindow": {
+                  "actions": {
+                    "Set_PeriodicStatus_DueSoon": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "vPeriodicStatus",
+                        "value": "측정권장"
+                      }
+                    },
+                    "Set_PeriodicDueDate_DueSoon": {
+                      "runAfter": {
+                        "Set_PeriodicStatus_DueSoon": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "vPeriodicDueDate",
+                        "value": "@variables('vNextOpenDue')"
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "DoUntil_FindCurrentPeriod": [
+                      "Succeeded"
+                    ]
+                  },
+                  "else": {
+                    "actions": {
+                      "Set_PeriodicStatus_Upcoming": {
+                        "type": "SetVariable",
+                        "inputs": {
+                          "name": "vPeriodicStatus",
+                          "value": "예정"
+                        }
+                      },
+                      "Set_PeriodicDueDate_Upcoming": {
+                        "runAfter": {
+                          "Set_PeriodicStatus_Upcoming": [
+                            "Succeeded"
+                          ]
+                        },
+                        "type": "SetVariable",
+                        "inputs": {
+                          "name": "vPeriodicDueDate",
+                          "value": "@concat('','')"
+                        }
+                      }
+                    }
+                  },
+                  "expression": {
+                    "and": [
+                      {
+                        "equals": [
+                          "@and(\r\n  not(\r\n    empty(\r\n      variables('vNextOpenDue')\r\n    )\r\n  ),\r\n  not(\r\n    empty(\r\n      variables('vNextOpenWindowStart')\r\n    )\r\n  ),\r\n  greaterOrEquals(\r\n    ticks(\r\n      concat(\r\n        outputs('Compose_AsOfDate'),\r\n        'T00:00:00Z'\r\n      )\r\n    ),\r\n    ticks(\r\n      concat(\r\n        variables('vNextOpenWindowStart'),\r\n        'T00:00:00Z'\r\n      )\r\n    )\r\n  )\r\n)",
+                          "@true"
+                        ]
+                      }
+                    ]
+                  },
+                  "type": "If"
+                },
+                "Compose_Debug_PeriodicStatus": {
+                  "runAfter": {
+                    "Condition_InRecommendationWindow": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": "@variables('vPeriodicStatus')"
+                },
+                "Compose_Debug_PeriodicDue": {
+                  "runAfter": {
+                    "Compose_Debug_PeriodicStatus": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": "@variables('vPeriodicDueDate')"
+                },
+                "Compose_Debug_NextOpenDue": {
+                  "runAfter": {
+                    "Compose_Debug_PeriodicDue": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": "@variables('vNextOpenDue')"
+                }
+              },
+              "runAfter": {
+                "Reset_PeriodicDueDate": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {
+                  "Condition_IsNotAvailable": {
+                    "actions": {
+                      "Filter_NotAvailable_PeriodicMeasurements": {
+                        "type": "Query",
+                        "inputs": {
+                          "from": "@body('Filter_Item_Measurements')",
+                          "where": "@equals(item()?['role'],'Periodic')"
+                        }
+                      },
+                      "Compose_Sorted_NotAvailablePeriodic": {
+                        "runAfter": {
+                          "Filter_NotAvailable_PeriodicMeasurements": [
+                            "Succeeded"
+                          ]
+                        },
+                        "type": "Compose",
+                        "inputs": "@sort(\r\n  body('Filter_NotAvailable_PeriodicMeasurements'),\r\n  'date'\r\n)"
+                      },
+                      "Reset_NotAvailablePeriodNo": {
+                        "runAfter": {
+                          "Compose_Sorted_NotAvailablePeriodic": [
+                            "Succeeded"
+                          ]
+                        },
+                        "type": "SetVariable",
+                        "inputs": {
+                          "name": "vPeriodNo",
+                          "value": 1
+                        }
+                      },
+                      "Apply_to_each_NotAvailablePeriodic": {
+                        "foreach": "@outputs('Compose_Sorted_NotAvailablePeriodic')",
+                        "actions": {
+                          "Append_PeriodMap_NotAvailable": {
+                            "type": "AppendToArrayVariable",
+                            "inputs": {
+                              "name": "arrMeasurementPeriodMap",
+                              "value": "@addProperty(addProperty(addProperty(json('{}'),'measurementId',string(items('Apply_to_each_NotAvailablePeriodic')?['measurementId'])),'itemId',string(items('Apply_to_each_Item')?['itemId'])),'period',concat('P',string(variables('vPeriodNo'))))"
+                            }
+                          },
+                          "Increment_NotAvailablePeriodNo": {
+                            "runAfter": {
+                              "Append_PeriodMap_NotAvailable": [
+                                "Succeeded"
+                              ]
+                            },
+                            "type": "IncrementVariable",
+                            "inputs": {
+                              "name": "vPeriodNo",
+                              "value": 1
+                            }
+                          }
+                        },
+                        "runAfter": {
+                          "Reset_NotAvailablePeriodNo": [
+                            "Succeeded"
+                          ]
+                        },
+                        "type": "Foreach"
+                      }
+                    },
+                    "else": {
+                      "actions": {}
+                    },
+                    "expression": {
+                      "and": [
+                        {
+                          "equals": [
+                            "@equals(\r\n  outputs('Compose_Cycle'),\r\n  'Not Available'\r\n)",
+                            "@true"
+                          ]
+                        }
+                      ]
+                    },
+                    "type": "If"
+                  }
+                }
+              },
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@or(\r\n  equals(\r\n    outputs('Compose_Cycle'),\r\n    'Monthly'\r\n  ),\r\n  equals(\r\n    outputs('Compose_Cycle'),\r\n    'Semiannual'\r\n  ),\r\n  equals(\r\n    outputs('Compose_Cycle'),\r\n    'Annual'\r\n  )\r\n)",
+                      "@true"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "",
+                      ""
+                    ]
+                  }
+                ]
+              },
+              "type": "If"
+            },
+            "Condition_AddPeriodicMail": {
+              "actions": {
+                "Compose_PeriodicDDay": {
+                  "type": "Compose",
+                  "inputs": "@if(empty(variables('vPeriodicDueDate')),'-',if(equals(div(sub(ticks(concat(variables('vPeriodicDueDate'),'T00:00:00Z')),ticks(concat(outputs('Compose_AsOfDate'),'T00:00:00Z'))),864000000000),0),'D-Day',if(greater(div(sub(ticks(concat(variables('vPeriodicDueDate'),'T00:00:00Z')),ticks(concat(outputs('Compose_AsOfDate'),'T00:00:00Z'))),864000000000),0),concat('D-',string(div(sub(ticks(concat(variables('vPeriodicDueDate'),'T00:00:00Z')),ticks(concat(outputs('Compose_AsOfDate'),'T00:00:00Z'))),864000000000))),concat('D+',string(sub(0,div(sub(ticks(concat(variables('vPeriodicDueDate'),'T00:00:00Z')),ticks(concat(outputs('Compose_AsOfDate'),'T00:00:00Z'))),864000000000)))))))"
+                },
+                "Append_PeriodicMail": {
+                  "runAfter": {
+                    "Compose_PeriodicDDay": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "AppendToArrayVariable",
+                  "inputs": {
+                    "name": "arrPeriodicMail",
+                    "value": "@addProperty(\r\n  addProperty(\r\n    addProperty(\r\n      addProperty(\r\n        addProperty(\r\n          addProperty(\r\n            addProperty(\r\n              addProperty(\r\n                json('{}'),\r\n                'status',\r\n                string(variables('vPeriodicStatus'))\r\n              ),\r\n              'partNumber',\r\n              string(items('Apply_to_each_Item')?['partNumber'])\r\n            ),\r\n            'itemName',\r\n            string(items('Apply_to_each_Item')?['itemName'])\r\n          ),\r\n          'department',\r\n          string(items('Apply_to_each_Item')?['department'])\r\n        ),\r\n        'registrationDate',\r\n        string(outputs('Compose_BaseDate'))\r\n      ),\r\n      'cycle',\r\n      string(outputs('Compose_CycleLabel'))\r\n    ),\r\n    'dueDate',\r\n    string(variables('vPeriodicDueDate'))\r\n  ),\r\n  'dDay',\r\n  string(outputs('Compose_PeriodicDDay'))\r\n)"
+                  }
+                }
+              },
+              "runAfter": {
+                "Condition_ActiveCycle": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {}
+              },
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@and(\r\n  equals(\r\n    variables('vPeriodicStatus'),\r\n    '측정권장'\r\n  ),\r\n  not(\r\n    empty(\r\n      variables('vPeriodicDueDate')\r\n    )\r\n  ),\r\n  not(\r\n    equals(\r\n      items('Apply_to_each_Item')?['type'],\r\n      'Facility'\r\n    )\r\n  ),\r\n  not(\r\n    equals(\r\n      items('Apply_to_each_Item')?['lifecycle'],\r\n      'ReplacedOld'\r\n    )\r\n  ),\r\n  not(\r\n    equals(\r\n      items('Apply_to_each_Item')?['lifecycle'],\r\n      'Discontinued'\r\n    )\r\n  ),\r\n  equals(\r\n    items('Apply_to_each_Item')?['isCurrent'],\r\n    true\r\n  ),\r\n  or(\r\n    equals(\r\n      outputs('Compose_Final_Risk'),\r\n      'H'\r\n    ),\r\n    equals(\r\n      outputs('Compose_Final_Risk'),\r\n      'M'\r\n    ),\r\n    equals(\r\n      outputs('Compose_Final_Risk'),\r\n      'L'\r\n    )\r\n  )\r\n)",
+                      "@true"
+                    ]
+                  }
+                ]
+              },
+              "type": "If"
+            },
+            "Condition_AddNewRegistrationMail": {
+              "actions": {
+                "Append_NewRegistrationMail": {
+                  "type": "AppendToArrayVariable",
+                  "inputs": {
+                    "name": "arrPeriodicMail",
+                    "value": {
+                      "status": "신규등록",
+                      "partNumber": "@string(items('Apply_to_each_Item')?['partNumber'])",
+                      "itemName": "@string(items('Apply_to_each_Item')?['itemName'])",
+                      "department": "@string(items('Apply_to_each_Item')?['department'])",
+                      "registrationDate": "@string(items('Apply_to_each_Item')?['createdDate'])",
+                      "cycle": "초기 측정 후 산정",
+                      "dueDate": "초기 XRF 필요",
+                      "dDay": "-"
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Condition_AddPeriodicMail": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {}
+              },
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@and(empty(outputs('Compose_Initial')),not(equals(items('Apply_to_each_Item')?['lifecycle'],'ReplacedOld')),not(equals(items('Apply_to_each_Item')?['lifecycle'],'Discontinued')),equals(items('Apply_to_each_Item')?['isCurrent'],true))",
+                      "@true"
+                    ]
+                  }
+                ]
+              },
+              "type": "If"
+            },
+            "Condition_AppendInitialPeriodMap": {
+              "actions": {
+                "Append_InitialPeriodMap": {
+                  "type": "AppendToArrayVariable",
+                  "inputs": {
+                    "name": "arrMeasurementPeriodMap",
+                    "value": "@addProperty(addProperty(addProperty(json('{}'),'measurementId',string(outputs('Compose_Initial')?['measurementId'])),'itemId',string(items('Apply_to_each_Item')?['itemId'])),'period','R')"
+                  }
+                }
+              },
+              "runAfter": {
+                "Compose_Initial": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {}
+              },
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@not(empty(outputs('Compose_Initial')))",
+                      "@true"
+                    ]
+                  }
+                ]
+              },
+              "type": "If"
+            }
+          },
+          "runAfter": {
+            "Initialize_PrecisionRowsHtml": [
+              "Succeeded"
+            ]
+          },
+          "type": "Foreach"
+        },
+        "Apply_to_each_Measurement_ForPrecision": {
+          "foreach": "@sort(body('Select_Measurements'),'sortKey')",
+          "actions": {
+            "Filter_PrecisionSourceElements": {
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Select_ElementResults')",
+                "where": "@equals(item()?['measurementId'],items('Apply_to_each_Measurement_ForPrecision')?['measurementId'])"
+              }
+            },
+            "Filter_PrecisionItem": {
+              "runAfter": {
+                "Filter_PrecisionSourceElements": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Select_Items')",
+                "where": "@equals(item()?['itemId'],items('Apply_to_each_Measurement_ForPrecision')?['itemId'])"
+              }
+            },
+            "Compose_PrecisionItem": {
+              "runAfter": {
+                "Filter_PrecisionItem": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(empty(body('Filter_PrecisionItem')),null,first(body('Filter_PrecisionItem')))"
+            },
+            "Compose_PrecisionPeriodTargetId": {
+              "runAfter": {
+                "Compose_PrecisionItem": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(equals(items('Apply_to_each_Measurement_ForPrecision')?['role'],'Retest'),if(empty(items('Apply_to_each_Measurement_ForPrecision')?['parentMeasurementId']),items('Apply_to_each_Measurement_ForPrecision')?['measurementId'],items('Apply_to_each_Measurement_ForPrecision')?['parentMeasurementId']),items('Apply_to_each_Measurement_ForPrecision')?['measurementId'])"
+            },
+            "Filter_PrecisionPeriodMap": {
+              "runAfter": {
+                "Compose_PrecisionPeriodTargetId": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@variables('arrMeasurementPeriodMap')",
+                "where": "@and(equals(item()?['measurementId'],outputs('Compose_PrecisionPeriodTargetId')),equals(item()?['itemId'],items('Apply_to_each_Measurement_ForPrecision')?['itemId']))"
+              }
+            },
+            "Compose_PrecisionPeriod": {
+              "runAfter": {
+                "Filter_PrecisionPeriodMap": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(equals(items('Apply_to_each_Measurement_ForPrecision')?['role'],'Initial'),'R',if(empty(body('Filter_PrecisionPeriodMap')),'미연결',first(body('Filter_PrecisionPeriodMap'))?['period']))"
+            },
+            "Select_PrecisionElementBase": {
+              "runAfter": {
+                "Compose_PrecisionPeriod": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Filter_PrecisionSourceElements')",
+                "select": {
+                  "element": "@item()?['element']",
+                  "ppmNorm": "@replace(replace(replace(replace(replace(toUpper(trim(string(coalesce(item()?['ppm'],'')))),'PPM',''),',',''),'–','-'),'—','-'),'−','-')",
+                  "judgmentText": "@toUpper(trim(string(coalesce(item()?['judgment'],''))))",
+                  "internalLimit": "@if(equals(item()?['element'],'Cd'),70,if(or(equals(item()?['element'],'Cl'),equals(item()?['element'],'Br')),630,700))"
+                }
+              }
+            },
+            "Select_PrecisionElementFlags": {
+              "runAfter": {
+                "Select_PrecisionElementBase": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Select_PrecisionElementBase')",
+                "select": {
+                  "element": "@item()?['element']",
+                  "ppmNorm": "@item()?['ppmNorm']",
+                  "judgmentText": "@item()?['judgmentText']",
+                  "internalLimit": "@item()?['internalLimit']",
+                  "isRemeasure": "@or(equals(item()?['judgmentText'],'??'),equals(item()?['judgmentText'],'※'),equals(item()?['judgmentText'],'CANNOT JUDGE'),equals(item()?['judgmentText'],'CANNOT BE JUDGED'))",
+                  "isND": "@or(equals(item()?['ppmNorm'],'ND'),equals(item()?['ppmNorm'],'N.D.'),equals(item()?['ppmNorm'],'N.D'),equals(item()?['ppmNorm'],'NOT DETECTED'),equals(item()?['ppmNorm'],'NON DETECTED'),equals(item()?['ppmNorm'],'불검출'),and(greaterOrEquals(length(item()?['ppmNorm']),2),equals(replace(item()?['ppmNorm'],'-',''),'')))",
+                  "isMissing": "@or(empty(item()?['ppmNorm']),equals(item()?['ppmNorm'],'-'),equals(item()?['ppmNorm'],'N/A'),equals(item()?['ppmNorm'],'NA'),equals(item()?['ppmNorm'],'NULL'),equals(item()?['ppmNorm'],'NONE'))",
+                  "isNumeric": "@isFloat(item()?['ppmNorm'])",
+                  "numericPpm": "@if(isFloat(item()?['ppmNorm']),float(item()?['ppmNorm']),0)"
+                }
+              }
+            },
+            "Filter_PrecisionDirectTargets": {
+              "runAfter": {
+                "Select_PrecisionElementFlags": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Select_PrecisionElementFlags')",
+                "where": "@and(equals(item()?['isRemeasure'],false),equals(item()?['isND'],false),equals(item()?['isMissing'],false),equals(item()?['isNumeric'],true),greater(item()?['numericPpm'],item()?['internalLimit']))"
+              }
+            },
+            "Select_PrecisionDirectTargetNames": {
+              "runAfter": {
+                "Filter_PrecisionDirectTargets": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Filter_PrecisionDirectTargets')",
+                "select": {
+                  "element": "@item()?['element']",
+                  "judgment": "XRF NG"
+                }
+              }
+            },
+            "Filter_PrecisionRetestTargets": {
+              "runAfter": {
+                "Select_PrecisionDirectTargetNames": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Select_PrecisionElementFlags')",
+                "where": "@and(or(equals(items('Apply_to_each_Measurement_ForPrecision')?['role'],'Retest'),greaterOrEquals(int(coalesce(items('Apply_to_each_Measurement_ForPrecision')?['attemptNo'],1)),2)),equals(item()?['isRemeasure'],true))"
+              }
+            },
+            "Select_PrecisionRetestTargetNames": {
+              "runAfter": {
+                "Filter_PrecisionRetestTargets": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Filter_PrecisionRetestTargets')",
+                "select": {
+                  "element": "@item()?['element']",
+                  "judgment": "재측정 후 ??"
+                }
+              }
+            },
+            "Filter_PrecisionCl": {
+              "runAfter": {
+                "Select_PrecisionRetestTargetNames": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Select_PrecisionElementFlags')",
+                "where": "@equals(item()?['element'],'Cl')"
+              }
+            },
+            "Filter_PrecisionBr": {
+              "runAfter": {
+                "Filter_PrecisionCl": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Select_PrecisionElementFlags')",
+                "where": "@equals(item()?['element'],'Br')"
+              }
+            },
+            "Compose_PrecisionCl": {
+              "runAfter": {
+                "Filter_PrecisionBr": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(empty(body('Filter_PrecisionCl')),null,first(body('Filter_PrecisionCl')))"
+            },
+            "Compose_PrecisionBr": {
+              "runAfter": {
+                "Compose_PrecisionCl": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(empty(body('Filter_PrecisionBr')),null,first(body('Filter_PrecisionBr')))"
+            },
+            "Compose_PrecisionClBrRequired": {
+              "runAfter": {
+                "Compose_PrecisionBr": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(or(empty(outputs('Compose_PrecisionCl')),empty(outputs('Compose_PrecisionBr'))),false,if(and(or(equals(outputs('Compose_PrecisionCl')?['isND'],true),equals(outputs('Compose_PrecisionCl')?['isNumeric'],true)),or(equals(outputs('Compose_PrecisionBr')?['isND'],true),equals(outputs('Compose_PrecisionBr')?['isNumeric'],true))),greater(add(outputs('Compose_PrecisionCl')?['numericPpm'],outputs('Compose_PrecisionBr')?['numericPpm']),1050),false))"
+            },
+            "Compose_PrecisionTargets": {
+              "runAfter": {
+                "Compose_PrecisionClBrRequired": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@union(union(body('Select_PrecisionDirectTargetNames'),body('Select_PrecisionRetestTargetNames')),if(equals(outputs('Compose_PrecisionClBrRequired'),true),createArray(addProperty(addProperty(json('{}'),'element','Cl+Br'),'judgment','XRF NG')),json('[]')))"
+            },
+            "Compose_PrecisionTargetCount": {
+              "runAfter": {
+                "Compose_PrecisionTargets": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@length(outputs('Compose_PrecisionTargets'))"
+            },
+            "Condition_HasPrecisionTargets": {
+              "actions": {
+                "Filter_CurrentPrecisionHeader": {
+                  "type": "Query",
+                  "inputs": {
+                    "from": "@body('Select_Precision')",
+                    "where": "@equals(item()?['triggerMeasurementId'],items('Apply_to_each_Measurement_ForPrecision')?['measurementId'])"
+                  }
+                },
+                "Compose_CurrentPrecisionHeader": {
+                  "runAfter": {
+                    "Filter_CurrentPrecisionHeader": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": "@if(empty(body('Filter_CurrentPrecisionHeader')),null,first(body('Filter_CurrentPrecisionHeader')))"
+                },
+                "Apply_to_each_PrecisionTarget": {
+                  "foreach": "@outputs('Compose_PrecisionTargets')",
+                  "actions": {
+                    "Filter_CurrentPrecisionElementResult": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@body('Select_PrecisionResults')",
+                        "where": "@and(equals(item()?['precisionId'],outputs('Compose_CurrentPrecisionHeader')?['precisionId']),equals(item()?['element'],items('Apply_to_each_PrecisionTarget')?['element']))"
+                      }
+                    },
+                    "Compose_CurrentPrecisionElementResult": {
+                      "runAfter": {
+                        "Filter_CurrentPrecisionElementResult": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Compose",
+                      "inputs": "@if(empty(body('Filter_CurrentPrecisionElementResult')),null,first(body('Filter_CurrentPrecisionElementResult')))"
+                    },
+                    "Compose_PrecisionLegalLimit": {
+                      "runAfter": {
+                        "Compose_CurrentPrecisionElementResult": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Compose",
+                      "inputs": "@if(equals(items('Apply_to_each_PrecisionTarget')?['element'],'Cd'),100,if(or(equals(items('Apply_to_each_PrecisionTarget')?['element'],'Cl'),equals(items('Apply_to_each_PrecisionTarget')?['element'],'Br')),900,if(equals(items('Apply_to_each_PrecisionTarget')?['element'],'Cl+Br'),1500,1000)))"
+                    },
+                    "Compose_PrecisionElementDecision": {
+                      "runAfter": {
+                        "Compose_PrecisionLegalLimit": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Compose",
+                      "inputs": "@if(empty(outputs('Compose_CurrentPrecisionHeader')),'REQUEST_REQUIRED',if(not(equals(outputs('Compose_CurrentPrecisionHeader')?['finalConfirm'],true)),'WAITING',if(empty(outputs('Compose_CurrentPrecisionElementResult')),'REVIEW_REQUIRED',if(equals(outputs('Compose_CurrentPrecisionElementResult')?['presence'],'미함유'),'OK',if(and(equals(outputs('Compose_CurrentPrecisionElementResult')?['presence'],'함유'),isFloat(replace(trim(string(coalesce(outputs('Compose_CurrentPrecisionElementResult')?['ppm'],''))),',',''))),if(lessOrEquals(float(replace(trim(string(coalesce(outputs('Compose_CurrentPrecisionElementResult')?['ppm'],''))),',','')),outputs('Compose_PrecisionLegalLimit')),'OK','NG'),'REVIEW_REQUIRED')))))"
+                    },
+                    "Condition_AppendPrecisionOpen": {
+                      "actions": {
+                        "Append_PrecisionOpen": {
+                          "type": "AppendToArrayVariable",
+                          "inputs": {
+                            "name": "arrPrecisionOpen",
+                            "value": {
+                              "groupKey": "@concat(outputs('Compose_PrecisionItem')?['itemId'],'|',items('Apply_to_each_Measurement_ForPrecision')?['measurementId'])",
+                              "itemId": "@outputs('Compose_PrecisionItem')?['itemId']",
+                              "partNumber": "@outputs('Compose_PrecisionItem')?['partNumber']",
+                              "itemName": "@outputs('Compose_PrecisionItem')?['itemName']",
+                              "department": "@outputs('Compose_PrecisionItem')?['department']",
+                              "element": "@items('Apply_to_each_PrecisionTarget')?['element']",
+                              "judgment": "@items('Apply_to_each_PrecisionTarget')?['judgment']",
+                              "period": "@outputs('Compose_PrecisionPeriod')",
+                              "measurementId": "@items('Apply_to_each_Measurement_ForPrecision')?['measurementId']",
+                              "xrfDate": "@if(empty(items('Apply_to_each_Measurement_ForPrecision')?['date']),'',formatDateTime(items('Apply_to_each_Measurement_ForPrecision')?['date'],'yyyy-MM-dd'))",
+                              "status": "@if(equals(outputs('Compose_PrecisionElementDecision'),'REQUEST_REQUIRED'),'의뢰 필요',if(equals(outputs('Compose_PrecisionElementDecision'),'WAITING'),'결과 대기',if(equals(outputs('Compose_PrecisionElementDecision'),'NG'),'NG 검토 필요','결과 확인 필요')))",
+                              "precisionId": "@if(empty(outputs('Compose_CurrentPrecisionHeader')),'',string(outputs('Compose_CurrentPrecisionHeader')?['precisionId']))",
+                              "requestedAt": "@if(empty(outputs('Compose_CurrentPrecisionHeader')),'',string(outputs('Compose_CurrentPrecisionHeader')?['requestedAt']))",
+                              "labName": "@if(empty(outputs('Compose_CurrentPrecisionHeader')),'',string(outputs('Compose_CurrentPrecisionHeader')?['labName']))",
+                              "reportNo": "@if(empty(outputs('Compose_CurrentPrecisionHeader')),'',string(outputs('Compose_CurrentPrecisionHeader')?['reportNo']))"
+                            }
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "Compose_PrecisionElementDecision": [
+                          "Succeeded"
+                        ]
+                      },
+                      "else": {
+                        "actions": {}
+                      },
+                      "expression": {
+                        "and": [
+                          {
+                            "equals": [
+                              "@not(equals(outputs('Compose_PrecisionElementDecision'),'OK'))",
+                              "@true"
+                            ]
+                          }
+                        ]
+                      },
+                      "type": "If"
+                    }
+                  },
+                  "runAfter": {
+                    "Compose_CurrentPrecisionHeader": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Foreach"
+                }
+              },
+              "runAfter": {
+                "Compose_PrecisionTargetCount": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {}
+              },
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@greater(outputs('Compose_PrecisionTargetCount'),0)",
+                      "@true"
+                    ]
+                  }
+                ]
+              },
+              "type": "If"
+            }
+          },
+          "runAfter": {
+            "Apply_to_each_Item": [
+              "Succeeded"
+            ]
+          },
+          "type": "Foreach"
+        },
+        "Select_PeriodicRowsHtml": {
+          "runAfter": {
+            "Apply_to_each_Measurement_ForPrecision": [
+              "Succeeded"
+            ]
+          },
+          "type": "Select",
+          "inputs": {
+            "from": "@variables('arrPeriodicMail')",
+            "select": "@{concat('<tr><td style=\"padding:11px 8px; border-bottom:1px solid #EFEFF1; font-size:12.33px; line-height:18px; color:#1A2020; text-align:center;\">',if(equals(item()?['status'],'신규등록'),'<span style=\"display:inline-block; background-color:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; border-radius:10px; padding:3px 10px; font-size:11.33px; font-weight:bold; white-space:nowrap;\">신규등록</span>',if(equals(item()?['status'],'측정권장'),'<span style=\"display:inline-block; background-color:#FFF7E6; color:#B45309; border:1px solid #FED7AA; border-radius:10px; padding:3px 10px; font-size:11.33px; font-weight:bold; white-space:nowrap;\">측정권장</span>',string(coalesce(item()?['status'],'')))),'</td><td style=\"padding:11px 8px; border-bottom:1px solid #EFEFF1; font-size:12.33px; line-height:18px; color:#1A2020; text-align:center;\">',string(coalesce(item()?['partNumber'],'')),'</td><td style=\"padding:11px 8px; border-bottom:1px solid #EFEFF1; font-size:12.33px; line-height:18px; color:#1A2020;\">',string(coalesce(item()?['itemName'],'')),'</td><td style=\"padding:11px 8px; border-bottom:1px solid #EFEFF1; font-size:12.33px; line-height:18px; color:#1A2020;\">',string(coalesce(item()?['department'],'')),'</td><td style=\"padding:11px 8px; border-bottom:1px solid #EFEFF1; font-size:12.33px; line-height:18px; color:#1A2020; text-align:center;\">',string(coalesce(item()?['registrationDate'],'')),'</td><td style=\"padding:11px 8px; border-bottom:1px solid #EFEFF1; font-size:12.33px; line-height:18px; color:#1A2020; text-align:center;\">',string(coalesce(item()?['cycle'],'')),'</td><td style=\"padding:11px 8px; border-bottom:1px solid #EFEFF1; font-size:12.33px; line-height:18px; color:#1A2020; text-align:center;\">',string(coalesce(item()?['dueDate'],'')),'</td><td style=\"padding:11px 8px; border-bottom:1px solid #EFEFF1; font-size:12.33px; line-height:18px; color:#1A2020; text-align:center;\">',if(equals(item()?['dDay'],'D-Day'),'<span style=\"display:inline-block; background-color:#E60A32; color:#FFFFFF; border-radius:4px; padding:2px 7px; font-size:11.33px; font-weight:bold; white-space:nowrap;\">D-Day</span>',if(startsWith(string(coalesce(item()?['dDay'],'')),'D-'),concat('<span style=\"color:#475467; font-weight:bold;\">',string(item()?['dDay']),'</span>'),string(coalesce(item()?['dDay'],'')))),'</td></tr>')}"
+          }
+        },
+        "Compose_PeriodicRowsHtml": {
+          "runAfter": {
+            "Select_PeriodicRowsHtml": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@join(body('Select_PeriodicRowsHtml'),'')"
+        },
+        "Select_PrecisionMailItemIds": {
+          "runAfter": {
+            "Compose_PeriodicRowsHtml": [
+              "Succeeded"
+            ]
+          },
+          "type": "Select",
+          "inputs": {
+            "from": "@variables('arrPrecisionOpen')",
+            "select": "@{item()?['itemId']}"
+          }
+        },
+        "Compose_UniquePrecisionMailItemIds": {
+          "runAfter": {
+            "Select_PrecisionMailItemIds": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@union(body('Select_PrecisionMailItemIds'),body('Select_PrecisionMailItemIds'))"
+        },
+        "Apply_to_each_PrecisionMailItem": {
+          "foreach": "@outputs('Compose_UniquePrecisionMailItemIds')",
+          "actions": {
+            "Filter_PrecisionOpenByItemHtml": {
+              "type": "Query",
+              "inputs": {
+                "from": "@variables('arrPrecisionOpen')",
+                "where": "@equals(item()?['itemId'],items('Apply_to_each_PrecisionMailItem'))"
+              }
+            },
+            "Compose_PrecisionMailItemFirst": {
+              "runAfter": {
+                "Filter_PrecisionOpenByItemHtml": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@first(body('Filter_PrecisionOpenByItemHtml'))"
+            },
+            "Append_PrecisionItemHeaderHtml": {
+              "runAfter": {
+                "Compose_PrecisionMailItemFirst": [
+                  "Succeeded"
+                ]
+              },
+              "type": "AppendToArrayVariable",
+              "inputs": {
+                "name": "arrPrecisionRowsHtml",
+                "value": "@concat('<tr><td colspan=\"5\" style=\"padding:11px 10px; background-color:#FFF4F6; border-top:1px solid #FBD0D9; border-bottom:1px solid #FBD0D9; font-size:12.33px; font-weight:bold; color:#1A2020;\"><span style=\"color:#E60A32;\">',string(coalesce(outputs('Compose_PrecisionMailItemFirst')?['partNumber'],'')),'</span>&nbsp;&nbsp;',string(coalesce(outputs('Compose_PrecisionMailItemFirst')?['itemName'],'')),'</td></tr>')"
+              }
+            },
+            "Select_PrecisionMeasurementGroupKeys": {
+              "runAfter": {
+                "Append_PrecisionItemHeaderHtml": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Select",
+              "inputs": {
+                "from": "@body('Filter_PrecisionOpenByItemHtml')",
+                "select": "@{item()?['groupKey']}"
+              }
+            },
+            "Compose_UniquePrecisionMeasurementGroupKeys": {
+              "runAfter": {
+                "Select_PrecisionMeasurementGroupKeys": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@union(body('Select_PrecisionMeasurementGroupKeys'),body('Select_PrecisionMeasurementGroupKeys'))"
+            },
+            "Apply_to_each_PrecisionMeasurementHtml": {
+              "foreach": "@outputs('Compose_UniquePrecisionMeasurementGroupKeys')",
+              "actions": {
+                "Filter_PrecisionOpenByMeasurementHtml": {
+                  "type": "Query",
+                  "inputs": {
+                    "from": "@body('Filter_PrecisionOpenByItemHtml')",
+                    "where": "@equals(item()?['groupKey'],items('Apply_to_each_PrecisionMeasurementHtml'))"
+                  }
+                },
+                "Compose_PrecisionMeasurementFirst": {
+                  "runAfter": {
+                    "Filter_PrecisionOpenByMeasurementHtml": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": "@first(body('Filter_PrecisionOpenByMeasurementHtml'))"
+                },
+                "Select_PrecisionElementChipsHtml": {
+                  "runAfter": {
+                    "Compose_PrecisionMeasurementFirst": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Select",
+                  "inputs": {
+                    "from": "@body('Filter_PrecisionOpenByMeasurementHtml')",
+                    "select": "@{concat('<span style=\"display:inline-block; background-color:#FFFFFF; border:1px solid #D0D5DD; border-radius:10px; padding:1px 8px; font-family:Arial, sans-serif; font-size:11.33px; font-weight:bold; color:#1A2020;\">',item()?['element'],'</span>')}"
+                  }
+                },
+                "Compose_UniquePrecisionElementChips": {
+                  "runAfter": {
+                    "Select_PrecisionElementChipsHtml": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": "@union(body('Select_PrecisionElementChipsHtml'),body('Select_PrecisionElementChipsHtml'))"
+                },
+                "Compose_PrecisionElementChipsHtml": {
+                  "runAfter": {
+                    "Compose_UniquePrecisionElementChips": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": "@join(outputs('Compose_UniquePrecisionElementChips'),'&nbsp;')"
+                },
+                "Select_PrecisionMeasurementJudgments": {
+                  "runAfter": {
+                    "Compose_PrecisionElementChipsHtml": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Select",
+                  "inputs": {
+                    "from": "@body('Filter_PrecisionOpenByMeasurementHtml')",
+                    "select": "@{item()?['judgment']}"
+                  }
+                },
+                "Compose_UniquePrecisionJudgments": {
+                  "runAfter": {
+                    "Select_PrecisionMeasurementJudgments": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": "@union(body('Select_PrecisionMeasurementJudgments'),body('Select_PrecisionMeasurementJudgments'))"
+                },
+                "Compose_PrecisionJudgmentText": {
+                  "runAfter": {
+                    "Compose_UniquePrecisionJudgments": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": "@join(outputs('Compose_UniquePrecisionJudgments'),' / ')"
+                },
+                "Select_PrecisionMeasurementStatuses": {
+                  "runAfter": {
+                    "Compose_PrecisionJudgmentText": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Select",
+                  "inputs": {
+                    "from": "@body('Filter_PrecisionOpenByMeasurementHtml')",
+                    "select": "@{item()?['status']}"
+                  }
+                },
+                "Compose_UniquePrecisionMeasurementStatuses": {
+                  "runAfter": {
+                    "Select_PrecisionMeasurementStatuses": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": "@union(body('Select_PrecisionMeasurementStatuses'),body('Select_PrecisionMeasurementStatuses'))"
+                },
+                "Compose_PrecisionOverallStatus": {
+                  "runAfter": {
+                    "Compose_UniquePrecisionMeasurementStatuses": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": "@if(contains(outputs('Compose_UniquePrecisionMeasurementStatuses'),'NG 검토 필요'),'NG 검토 필요',if(contains(outputs('Compose_UniquePrecisionMeasurementStatuses'),'결과 확인 필요'),'결과 확인 필요',if(contains(outputs('Compose_UniquePrecisionMeasurementStatuses'),'결과 대기'),'결과 대기','의뢰 필요')))"
+                },
+                "Compose_PrecisionStatusBadgeHtml": {
+                  "runAfter": {
+                    "Compose_PrecisionOverallStatus": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": "@if(equals(outputs('Compose_PrecisionOverallStatus'),'NG 검토 필요'),'<span style=\"background-color:#E60A32; color:#FFFFFF; border:1px solid #E60A32; display:inline-block; border-radius:10px; padding:2px 10px; font-size:11.33px; font-weight:bold; white-space:nowrap;\">NG 검토 필요</span>',if(equals(outputs('Compose_PrecisionOverallStatus'),'결과 확인 필요'),'<span style=\"background-color:#FFF4E5; color:#B54708; border:1px solid #FEDF89; display:inline-block; border-radius:10px; padding:2px 10px; font-size:11.33px; font-weight:bold; white-space:nowrap;\">결과 확인 필요</span>',if(equals(outputs('Compose_PrecisionOverallStatus'),'결과 대기'),'<span style=\"background-color:#F2F4F7; color:#1A2020; border:1px solid #DCDFE4; display:inline-block; border-radius:10px; padding:2px 10px; font-size:11.33px; font-weight:bold; white-space:nowrap;\">결과 대기</span>','<span style=\"background-color:#FDE7EB; color:#1A2020; border:1px solid #F9C5CF; display:inline-block; border-radius:10px; padding:2px 10px; font-size:11.33px; font-weight:bold; white-space:nowrap;\">의뢰 필요</span>')))"
+                },
+                "Append_PrecisionMeasurementRowHtml": {
+                  "runAfter": {
+                    "Compose_PrecisionStatusBadgeHtml": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "AppendToArrayVariable",
+                  "inputs": {
+                    "name": "arrPrecisionRowsHtml",
+                    "value": "@concat('<tr><td style=\"padding:11px 8px; border-bottom:1px solid #EFEFF1; font-size:12.33px; line-height:18px; color:#1A2020; text-align:center;\">',string(coalesce(outputs('Compose_PrecisionMeasurementFirst')?['period'],'')),'</td><td style=\"padding:11px 8px; border-bottom:1px solid #EFEFF1; font-size:12.33px; line-height:18px; color:#1A2020; text-align:center;\">',string(coalesce(outputs('Compose_PrecisionMeasurementFirst')?['xrfDate'],'')),'</td><td style=\"padding:11px 8px; border-bottom:1px solid #EFEFF1; font-size:12.33px; line-height:18px; color:#1A2020; text-align:center;\">',outputs('Compose_PrecisionElementChipsHtml'),'</td><td style=\"padding:11px 8px; border-bottom:1px solid #EFEFF1; font-size:12.33px; line-height:18px; color:#1A2020; text-align:center;\">',outputs('Compose_PrecisionJudgmentText'),'</td><td style=\"padding:11px 8px; border-bottom:1px solid #EFEFF1; font-size:12.33px; line-height:18px; color:#1A2020; text-align:center;\">',outputs('Compose_PrecisionStatusBadgeHtml'),'</td></tr>')"
+                  }
+                }
+              },
+              "runAfter": {
+                "Compose_UniquePrecisionMeasurementGroupKeys": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Foreach"
+            }
+          },
+          "runAfter": {
+            "Compose_UniquePrecisionMailItemIds": [
+              "Succeeded"
+            ]
+          },
+          "type": "Foreach"
+        },
+        "Compose_PrecisionRowsHtml": {
+          "runAfter": {
+            "Apply_to_each_PrecisionMailItem": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@join(variables('arrPrecisionRowsHtml'),'')"
+        },
+        "Compose_EmailTemplate": {
+          "runAfter": {
+            "Compose_PrecisionRowsHtml": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "<!DOCTYPE html>\n<html lang=\"ko\" xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\">\n<head>\n<meta charset=\"UTF-8\">\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n<title>MXKPCS 제품환경관리 자동 알림</title>\n<!--[if mso]>\n<style type=\"text/css\">\nbody, table, td, th, span, div, p, a { font-family: \"Malgun Gothic\", Arial, sans-serif !important; }\ntable { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }\n</style>\n<noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>\n<![endif]-->\n</head>\n<body style=\"margin:0; padding:0; background-color:#F8F9FA; font-family:'Malgun Gothic', Arial, sans-serif; color:#1A2020; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%;\">\n<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" bgcolor=\"#F8F9FA\" style=\"width:100%; background-color:#F8F9FA; border-collapse:collapse;\">\n<tr>\n<td align=\"center\" style=\"padding:24px 12px;\">\n<!--[if mso]><table role=\"presentation\" width=\"920\" align=\"center\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tr><td><![endif]-->\n<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%; max-width:920px; border-collapse:collapse; margin:0 auto;\">\n<!-- ===================== HEADER ===================== -->\n<tr>\n<td bgcolor=\"#E60A32\" height=\"4\" style=\"height:4px; line-height:4px; font-size:4px; background-color:#E60A32;\">&nbsp;</td>\n</tr>\n<tr>\n<td bgcolor=\"#FFFFFF\" style=\"background-color:#FFFFFF; border-left:1px solid #DCDFE4; border-right:1px solid #DCDFE4; border-bottom:1px solid #DCDFE4; padding:18px 28px;\">\n<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%; border-collapse:collapse;\">\n<tr>\n<td valign=\"middle\">\n<a href=\"http://kanappweb09:2100/\" target=\"_blank\" title=\"MXKPCS 바로가기\" style=\"text-decoration:none; color:#E60A32;\"><span style=\"font-family:Arial, 'Malgun Gothic', sans-serif; font-size:23.33px; line-height:28px; font-weight:bold; letter-spacing:1px;\"><span style=\"color:#1B2F5E;\">MXK</span><span style=\"color:#E60A32;\">PCS</span></span><span style=\"font-family:'Malgun Gothic', Arial, sans-serif; font-size:12.33px; line-height:28px; font-weight:bold; color:#E60A32; padding-left:8px;\">바로가기&nbsp;&rarr;</span></a>\n<div style=\"font-family:Arial, 'Malgun Gothic', sans-serif; font-size:12.33px; line-height:18px; color:#1A2020;\">Product Compliance System</div>\n</td>\n<td valign=\"middle\" align=\"right\" width=\"300\" style=\"width:300px;\">\n<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" align=\"right\" style=\"border-collapse:collapse; border:1px solid #DCDFE4;\">\n<tr>\n<td width=\"64\" align=\"center\" bgcolor=\"#F2F4F7\" style=\"width:64px; background-color:#F2F4F7; padding:7px 12px; border-bottom:1px solid #DCDFE4; border-right:1px solid #DCDFE4; font-size:11.33px; line-height:18px; font-weight:bold; color:#1A2020; text-align:center; white-space:nowrap;\">알림</td>\n<td align=\"center\" style=\"padding:7px 14px; border-bottom:1px solid #DCDFE4; font-size:12.33px; line-height:18px; font-weight:bold; color:#1A2020; text-align:center; white-space:nowrap;\">제품환경 관리</td>\n</tr>\n<tr>\n<td width=\"64\" align=\"center\" bgcolor=\"#F2F4F7\" style=\"width:64px; background-color:#F2F4F7; padding:7px 12px; border-right:1px solid #DCDFE4; font-size:11.33px; line-height:18px; font-weight:bold; color:#1A2020; text-align:center; white-space:nowrap;\">기준일</td>\n<td align=\"center\" style=\"padding:7px 14px; font-size:12.33px; line-height:18px; color:#1A2020; text-align:center; white-space:nowrap;\">{{AS_OF_DATE}}</td>\n</tr>\n</table>\n</td>\n</tr>\n</table>\n</td>\n</tr>\n<!-- ===================== SECTION 1 START : 정기 XRF 관리 ===================== -->\n<tr style=\"{{PERIODIC_SECTION_STYLE}}\">\n<td style=\"padding:16px 0 0 0;\">\n<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" bgcolor=\"#FFFFFF\" style=\"width:100%; background-color:#FFFFFF; border:1px solid #DCDFE4; border-collapse:collapse;\">\n<tr>\n<td style=\"padding:22px 24px 0 24px;\">\n<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%; border-collapse:collapse;\">\n<tr>\n<td valign=\"bottom\" style=\"font-size:16.33px; line-height:24px; font-weight:bold; color:#1A2020;\">정기 XRF 관리</td>\n<td valign=\"bottom\" align=\"right\" style=\"text-align:right; white-space:nowrap; font-family:Arial, 'Malgun Gothic', sans-serif; font-size:16.33px; line-height:24px; font-weight:bold; color:#1A2020;\">Total&nbsp;{{PERIODIC_COUNT}}</td>\n</tr>\n</table>\n</td>\n</tr>\n<tr>\n<td style=\"padding:14px 24px 24px 24px;\">\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%; border-collapse:collapse; font-family:'Malgun Gothic', Arial, sans-serif;\">\n<thead>\n<tr>\n<th width=\"90\" align=\"center\" bgcolor=\"#F4F5F7\" style=\"width:90px; background-color:#F4F5F7; padding:10px 8px; border-top:2px solid #1A2020; border-bottom:1px solid #DCDFE4; font-size:11.33px; line-height:16px; font-weight:bold; color:#1A2020; text-align:center; white-space:nowrap;\">구분</th>\n<th width=\"95\" align=\"center\" bgcolor=\"#F4F5F7\" style=\"width:95px; background-color:#F4F5F7; padding:10px 8px; border-top:2px solid #1A2020; border-bottom:1px solid #DCDFE4; font-size:11.33px; line-height:16px; font-weight:bold; color:#1A2020; text-align:center; white-space:nowrap;\">품번</th>\n<th align=\"left\" bgcolor=\"#F4F5F7\" style=\"background-color:#F4F5F7; padding:10px 8px; border-top:2px solid #1A2020; border-bottom:1px solid #DCDFE4; font-size:11.33px; line-height:16px; font-weight:bold; color:#1A2020; text-align:left; white-space:nowrap;\">품목명</th>\n<th width=\"100\" align=\"left\" bgcolor=\"#F4F5F7\" style=\"width:100px; background-color:#F4F5F7; padding:10px 8px; border-top:2px solid #1A2020; border-bottom:1px solid #DCDFE4; font-size:11.33px; line-height:16px; font-weight:bold; color:#1A2020; text-align:left; white-space:nowrap;\">담당부서</th>\n<th width=\"92\" align=\"center\" bgcolor=\"#F4F5F7\" style=\"width:92px; background-color:#F4F5F7; padding:10px 8px; border-top:2px solid #1A2020; border-bottom:1px solid #DCDFE4; font-size:11.33px; line-height:16px; font-weight:bold; color:#1A2020; text-align:center; white-space:nowrap;\">등록일</th>\n<th width=\"85\" align=\"center\" bgcolor=\"#F4F5F7\" style=\"width:85px; background-color:#F4F5F7; padding:10px 8px; border-top:2px solid #1A2020; border-bottom:1px solid #DCDFE4; font-size:11.33px; line-height:16px; font-weight:bold; color:#1A2020; text-align:center; white-space:nowrap;\">관리주기</th>\n<th width=\"92\" align=\"center\" bgcolor=\"#F4F5F7\" style=\"width:92px; background-color:#F4F5F7; padding:10px 8px; border-top:2px solid #1A2020; border-bottom:1px solid #DCDFE4; font-size:11.33px; line-height:16px; font-weight:bold; color:#1A2020; text-align:center; white-space:nowrap;\">측정기한</th>\n<th width=\"72\" align=\"center\" bgcolor=\"#F4F5F7\" style=\"width:72px; background-color:#F4F5F7; padding:10px 8px; border-top:2px solid #1A2020; border-bottom:1px solid #DCDFE4; font-size:11.33px; line-height:16px; font-weight:bold; color:#1A2020; text-align:center; white-space:nowrap;\">D-Day</th>\n</tr>\n</thead>\n<tbody>\n{{PERIODIC_ROWS}}\n</tbody>\n</table>\n</td>\n</tr>\n</table>\n</td>\n</tr>\n<!-- ===================== SECTION 1 END ===================== -->\n<!-- ===================== SECTION 2 START : 정밀분석 관리 ===================== -->\n<tr style=\"{{PRECISION_SECTION_STYLE}}\">\n<td style=\"padding:16px 0 0 0;\">\n<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" bgcolor=\"#FFFFFF\" style=\"width:100%; background-color:#FFFFFF; border:1px solid #DCDFE4; border-collapse:collapse;\">\n<tr>\n<td style=\"padding:22px 24px 0 24px;\">\n<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%; border-collapse:collapse;\">\n<tr>\n<td valign=\"bottom\" style=\"font-size:16.33px; line-height:24px; font-weight:bold; color:#1A2020;\">정밀분석 관리</td>\n<td valign=\"bottom\" align=\"right\" style=\"text-align:right; white-space:nowrap; font-family:Arial, 'Malgun Gothic', sans-serif; font-size:16.33px; line-height:24px; font-weight:bold; color:#1A2020;\">Total&nbsp;{{PRECISION_COUNT}}</td>\n</tr>\n</table>\n</td>\n</tr>\n<tr>\n<td style=\"padding:14px 24px 24px 24px;\">\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%; border-collapse:collapse; font-family:'Malgun Gothic', Arial, sans-serif;\">\n<thead>\n<tr>\n<th width=\"110\" align=\"center\" bgcolor=\"#F4F5F7\" style=\"width:110px; background-color:#F4F5F7; padding:10px 8px; border-top:2px solid #1A2020; border-bottom:1px solid #DCDFE4; font-size:11.33px; line-height:16px; font-weight:bold; color:#1A2020; text-align:center; white-space:nowrap;\">발생주기</th>\n<th width=\"130\" align=\"center\" bgcolor=\"#F4F5F7\" style=\"width:130px; background-color:#F4F5F7; padding:10px 8px; border-top:2px solid #1A2020; border-bottom:1px solid #DCDFE4; font-size:11.33px; line-height:16px; font-weight:bold; color:#1A2020; text-align:center; white-space:nowrap;\">측정일</th>\n<th align=\"center\" bgcolor=\"#F4F5F7\" style=\"background-color:#F4F5F7; padding:10px 8px; border-top:2px solid #1A2020; border-bottom:1px solid #DCDFE4; font-size:11.33px; line-height:16px; font-weight:bold; color:#1A2020; text-align:center; white-space:nowrap;\">대상 원소</th>\n<th width=\"150\" align=\"center\" bgcolor=\"#F4F5F7\" style=\"width:150px; background-color:#F4F5F7; padding:10px 8px; border-top:2px solid #1A2020; border-bottom:1px solid #DCDFE4; font-size:11.33px; line-height:16px; font-weight:bold; color:#1A2020; text-align:center; white-space:nowrap;\">판정</th>\n<th width=\"140\" align=\"center\" bgcolor=\"#F4F5F7\" style=\"width:140px; background-color:#F4F5F7; padding:10px 8px; border-top:2px solid #1A2020; border-bottom:1px solid #DCDFE4; font-size:11.33px; line-height:16px; font-weight:bold; color:#1A2020; text-align:center; white-space:nowrap;\">진행 상태</th>\n</tr>\n</thead>\n<tbody>\n{{PRECISION_ROWS}}\n</tbody>\n</table>\n</td>\n</tr>\n</table>\n</td>\n</tr>\n<!-- ===================== SECTION 2 END ===================== -->\n</table>\n<!--[if mso]></td></tr></table><![endif]-->\n</td>\n</tr>\n</table>\n</body>\n</html>"
+        },
+        "Compose_EmailBody": {
+          "runAfter": {
+            "Compose_EmailTemplate": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@replace(replace(replace(replace(replace(replace(replace(outputs('Compose_EmailTemplate'),'{{AS_OF_DATE}}',outputs('Compose_AsOfDate')),'{{PERIODIC_COUNT}}',string(length(variables('arrPeriodicMail')))),'{{PRECISION_COUNT}}',string(length(outputs('Compose_UniquePrecisionMailItemIds')))),'{{PERIODIC_ROWS}}',outputs('Compose_PeriodicRowsHtml')),'{{PRECISION_ROWS}}',outputs('Compose_PrecisionRowsHtml')),'{{PERIODIC_SECTION_STYLE}}',if(greater(length(variables('arrPeriodicMail')),0),'','display:none;')),'{{PRECISION_SECTION_STYLE}}',if(greater(length(variables('arrPrecisionOpen')),0),'','display:none;'))"
+        },
+        "Condition_ShouldSendEmail": {
+          "actions": {
+            "메일_보내기(V2)": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "emailMessage/To": "seolhwa.lee@molex.com",
+                  "emailMessage/Subject": "@concat('[MXKPCS] 제품환경관리 자동 알림 (',outputs('Compose_AsOfDate'),')')",
+                  "emailMessage/Body": "@outputs('Compose_EmailBody')",
+                  "emailMessage/Importance": "Normal"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                  "operationId": "SendEmailV2",
+                  "connectionName": "shared_office365"
+                }
+              }
+            },
+            "메일_알림_보내기(V3)": {
+              "runAfter": {
+                "메일_보내기(V2)": [
+                  "Succeeded"
+                ]
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "request/to": "seolhwa.lee@molex.com",
+                  "request/subject": "Test",
+                  "request/text": "<p class=\"editor-paragraph\">Test</p>"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sendmail",
+                  "operationId": "SendEmailV3",
+                  "connectionName": "shared_sendmail"
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Compose_EmailBody": [
+              "Succeeded"
+            ]
+          },
+          "else": {
+            "actions": {}
+          },
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@or(greater(length(variables('arrPeriodicMail')),0),greater(length(variables('arrPrecisionOpen')),0))",
+                  "@true"
+                ]
+              }
+            ]
+          },
+          "type": "If"
+        },
+        "Initialize_ConsumedMeasurementIds": {
+          "runAfter": {
+            "Initialize_PeriodNo": [
+              "Succeeded"
+            ]
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "vConsumedMeasurementIds",
+                "type": "array",
+                "value": []
+              }
+            ]
+          }
+        },
+        "Initialize_PeriodNo": {
+          "runAfter": {
+            "Initialize_PrecisionMail": [
+              "Succeeded"
+            ]
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "vPeriodNo",
+                "type": "integer",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "Initialize_LatestOverdueDue": {
+          "runAfter": {
+            "Initialize_ConsumedMeasurementIds": [
+              "Succeeded"
+            ]
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "vLatestOverdueDue",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Initialize_NextOpenDue": {
+          "runAfter": {
+            "Initialize_LatestOverdueDue": [
+              "Succeeded"
+            ]
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "vNextOpenDue",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Initialize_NextOpenWindowStart": {
+          "runAfter": {
+            "Initialize_NextOpenDue": [
+              "Succeeded"
+            ]
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "vNextOpenWindowStart",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Initialize_HasCompletedPeriodic": {
+          "runAfter": {
+            "Initialize_NextOpenWindowStart": [
+              "Succeeded"
+            ]
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "vHasCompletedPeriodic",
+                "type": "boolean",
+                "value": false
+              }
+            ]
+          }
+        },
+        "Initialize_PeriodLoopDone": {
+          "runAfter": {
+            "Initialize_HasCompletedPeriodic": [
+              "Succeeded"
+            ]
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "vPeriodLoopDone",
+                "type": "boolean",
+                "value": false
+              }
+            ]
+          }
+        },
+        "Initialize_PeriodicStatus": {
+          "runAfter": {
+            "Initialize_PeriodLoopDone": [
+              "Succeeded"
+            ]
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "vPeriodicStatus",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Initialize_PeriodicDueDate": {
+          "runAfter": {
+            "Initialize_PeriodicStatus": [
+              "Succeeded"
+            ]
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "vPeriodicDueDate",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Initialize_arrMeasurementPeriodMap": {
+          "runAfter": {
+            "Initialize_PeriodicDueDate": [
+              "Succeeded"
+            ]
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "arrMeasurementPeriodMap",
+                "type": "array",
+                "value": "@json('[]')"
+              }
+            ]
+          }
+        },
+        "Init_arrPrecisionOpen": {
+          "runAfter": {
+            "Initialize_arrMeasurementPeriodMap": [
+              "Succeeded"
+            ]
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "arrPrecisionOpen",
+                "type": "array",
+                "value": "@json('[]')"
+              }
+            ]
+          }
+        },
+        "Initialize_PrecisionRowsHtml": {
+          "runAfter": {
+            "Init_arrPrecisionOpen": [
+              "Succeeded"
+            ]
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "arrPrecisionRowsHtml",
+                "type": "array",
+                "value": []
+              }
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}
